@@ -78,4 +78,4 @@ connection.connect(error =>{
     console.log(`Database server running on port ${PORT}!`);
 });
 
-app.listen(PORT, "localhost")
+app.listen(PORT)
