@@ -17,7 +17,7 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false })
 //Mysql
 const connection = mysql.createConnection({
     host: process.env.HOST,
-    user: process.env.USER,
+    user: process.env.DBUSER,
     password: process.env.PASSWORD,
     database: process.env.DATABASE
 });
