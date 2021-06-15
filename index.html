@@ -42,7 +42,7 @@
             <h4>Análisis gráfico</h4>
             <canvas id="lecturas" class="w-100"></canvas>
         </div>
-
+        
         <div id="movimientosContainer">
             <h4>Análisis de movimientos</h4>
             <table class="table table-hover" id="movimientos">
@@ -172,20 +172,21 @@
                         vibraciones1.push(dato["vibraciones"]);
                         temperaturas1.push(dato["temperatura"]);
                         fechas1.push(dato["hora"]);
-                        if(myChart){
-                            myChart.data.labels.pop();
-                            myChart.data.datasets.forEach((dataset) => {
-                                dataset.data.pop();
-                            });
-                            
-                            myChart.data.labels.push(fechas1);
-                            myChart.data.datasets[0].data = temperaturas1;
-                            myChart.data.datasets[1].data = humedades1;
-                            myChart.data.datasets[2].data = vibraciones1;
-                            
-                            myChart.update();
-                        }
-                    }) 
+                        
+                    })
+                    if(myChart){
+                        myChart.data.labels.pop();
+                        myChart.data.datasets.forEach((dataset) => {
+                            dataset.data.pop();
+                        });
+                        
+                        myChart.data.labels.push(fechas1);
+                        myChart.data.datasets[0].data = temperaturas1;
+                        myChart.data.datasets[1].data = humedades1;
+                        myChart.data.datasets[2].data = vibraciones1;
+                        
+                        myChart.update();
+                    }
                 } else {
                     $("#lecturasContainer").addClass("d-none");
                 }
