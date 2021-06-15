@@ -42,6 +42,29 @@ app.get('/GET',(req, res) =>{
      
 })
 
+app.get('/get24/:date',(req, res) =>{
+    const sql = 'SELECT temperatura, vibraciones, humedad, date_format(fecha, "%H:%i") as hora FROM lecturas_periodicas WHERE DATE(FECHA)="'+ req.params.date+'"';
+    connection.query(sql,(err,results )=> {
+        if (err) throw err;
+        if(results.length > 0){
+            res.json(results);
+        } else{
+            res.send('No results');
+        }
+    });
+})
+
+app.get('/getmov24/:date',(req, res) =>{
+    const sql = 'select hour(fecha) as hora, count(hour(fecha)) as activaciones from movimientos where date(fecha) = "' + req.params.date + '" group by hour(fecha);';
+    connection.query(sql,(err,results )=> {
+        if (err) throw err;
+        if(results.length > 0){
+            res.json(results);
+        } else{
+            res.send('No results');
+        }
+    });
+})
 
 
 app.post('/add', urlencodedParser , (req,res)=>{
@@ -56,7 +79,7 @@ app.post('/add', urlencodedParser , (req,res)=>{
 
     connection.query(sql, lecturaObj, error => {
         if(error) throw error;
-        res.send('Lectura creada + ');
+        res.send('Lectura creada');
     });
 });
 

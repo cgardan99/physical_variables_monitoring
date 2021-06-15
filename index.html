@@ -9,6 +9,7 @@
 </head>
 <body>
     <div class="text center p-5">
+        <h1>CONDICION ACTUAL</h1>
         <div>
             <h1>Id lectura</h1>
             <h2 id="id"></h2>
@@ -22,31 +23,177 @@
             <h2 id="humedad"></h2>
         </div>
         <div>
-            <h1>ppm gas</h1>
-            <h2 id="ppm"></h2>
+            <h1>vibraciones</h1>
+            <h2 id="vibraciones"></h2>
         </div>
         <div>
             <h1>Fecha</h1>
             <h2 id="fecha"></h2>
         </div>
     </div>
-</body>
-<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-<script>
-    $(window).on("load", function(){
-        setInterval(get_datos, 1000);
-    });
-    function get_datos(){
-        $.get( "/GET")
-        .done(function( data ) {
-            $("#temp").html(data[0].temperatura);
-            $("#humedad").html(data[0].humedad);
-            $("#ppm").html(data[0].ppm);
-            $("#fecha").html(data[0].fecha);
-            $("#id").html(data[0].lec_id);
+    <br>
+    <br>
+    <div class="text-center p-3">
+        <h1>Estadisticas</h1>
+        <h3>Selecciona una fecha:</h3>
+        <input type="date" name="fecha" id="date">
+        <br><br><br>
+        <div id="lecturasContainer">
+            <h4>Análisis gráfico</h4>
+            <canvas id="lecturas" class="w-100"></canvas>
+        </div>
+
+        <div id="movimientosContainer">
+            <h4>Análisis de movimientos</h4>
+            <table class="table table-hover" id="movimientos">
+                <thead>
+                    <tr>
+                        <th>Intervalo de hora</th>
+                        <th># de movimientos</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        
+    </body>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var humedades = [];
+        var temperaturas = [];
+        var vibraciones = [];
+        var fechas = [];
+        var fecha;
+        var myChart;
+        var tabla;
+        
+        $(window).on("load", function(){
+            table = document.getElementById("movimientos");
+            setInterval(get_datos, 1000);
+            $("#date").on("change", function(){
+                fecha = new Date($("#date").val()).toISOString().replace(/T.*/,'');
+                updateCharts(fecha);
+            });
+            fecha = new Date(new Date() -86400000).toISOString().replace(/T.*/,'');;
+            document.getElementById("date").valueAsDate = new Date(new Date() -86400000);
+            updateCharts(fecha);
+            var ctx = document.getElementById('lecturas').getContext('2d');
+            
+            
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: fechas,
+                    datasets: [{
+                        label: 'Lecturas de temperatura',
+                        data: temperaturas,
+                        borderWidth: 2,
+                        borderColor: 'rgb(0, 192, 192)',
+                        tension: 0.1
+                    }, {
+                        label: 'Lecturas de humedad',
+                        data: humedades,
+                        borderWidth: 2,
+                        borderColor: 'rgb(75, 0, 192)',
+                        tension: 0.1
+                    }, {
+                        label: 'Lecturas de vibraciones',
+                        data: vibraciones,
+                        borderWidth: 2,
+                        borderColor: 'rgb(75, 192, 0)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
         });
-    }
-</script>
-</html>
+        function get_datos(){
+            $.get( "/GET")
+            .done(function( data ) {
+                $("#temp").html(data[0].temperatura);
+                $("#humedad").html(data[0].humedad);
+                $("#vibraciones").html(data[0].vibraciones);
+                $("#fecha").html(data[0].fecha);
+                $("#id").html(data[0].id);
+            });
+        }
+        function updateCharts(fecha) {
+            var humedades1 = [];
+            var temperaturas1 = [];
+            var vibraciones1 = [];
+            var fechas1 = [];
+            
+            var nrows = table.rows.length
+            for(var i = 1; i < nrows; i++) {
+                table.deleteRow(1);
+            }
+            var strdate;
+            if(fecha == "" || !fecha) {
+                strdate = new Date().toISOString().replace(/T.*/,'')
+            } else {
+                strdate = fecha;
+            }
+            $.get(`getmov24/${strdate}`)
+            .done(function( data ) {
+                if(data != "No results") {
+                    $("#movimientosContainer").removeClass("d-none");
+                    var i = 1;
+                    data.map((dato) => {
+                        var row = table.insertRow(i);
+                        var cell1 = row.insertCell(0);
+                        var cell2 = row.insertCell(1);
+                        cell1.innerHTML = dato["hora"] + " hrs";
+                        cell2.innerHTML = dato["activaciones"];
+                        i++;
+                    })
+                } else {
+                    $("#movimientosContainer").addClass("d-none");
+                }   
+            });
+            $.get(`get24/${strdate}`)
+            .done(function( data ) {
+                if(data != "No results") {
+                    $("#lecturasContainer").removeClass("d-none");
+                    data.map((dato) => {
+                        humedades.push(dato["humedad"]);
+                        vibraciones.push(dato["vibraciones"]);
+                        temperaturas.push(dato["temperatura"]);
+                        fechas.push(dato["hora"]);
+                        
+                        humedades1.push(dato["humedad"]);
+                        vibraciones1.push(dato["vibraciones"]);
+                        temperaturas1.push(dato["temperatura"]);
+                        fechas1.push(dato["hora"]);
+                        if(myChart){
+                            myChart.data.labels.pop();
+                            myChart.data.datasets.forEach((dataset) => {
+                                dataset.data.pop();
+                            });
+                            
+                            myChart.data.labels.push(fechas1);
+                            myChart.data.datasets[0].data = temperaturas1;
+                            myChart.data.datasets[1].data = humedades1;
+                            myChart.data.datasets[2].data = vibraciones1;
+                            
+                            myChart.update();
+                        }
+                    }) 
+                } else {
+                    $("#lecturasContainer").addClass("d-none");
+                }
+            });
+            
+        }
+        
+        
+        
+    </script>
+    </html>
